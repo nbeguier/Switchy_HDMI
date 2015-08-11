@@ -1,20 +1,64 @@
 #!/bin/bash
 
-# 0 = ORDI seulement
-# 1 = HDMI seulement
-# 2 = both
+function usage {
+  echo "Usage: switchy_hdmi [-hvl] [-a OPTION] [-o output_card]"
+  echo ""
+  echo "switchy_hdmi -a 0            # Désactive le HDMI."
+  echo "switchy_hdmi -a 1            # Active seulement le HDMI."
+  echo "switchy_hdmi -a 2            # Laisse le PC en master."
+  echo "switchy_hdmi -a 1 -o 'HDMI2' # Active seulement le HDMI, et force l'interface de sortie."
+  echo "switchy_hdmi -l              # Affiche les informations des cartes."
+}
 
-if [ $# -ne 1 ]; then exit 1; fi
+HDMI_CARD='HDMI1'
+PC_CARD='LVDS1'
+VERSION='1.1.0'
 
-ARG=$1
+while getopts "a:hlo:v" opt; do
+  case $opt in
+    a)
+      ARG=$OPTARG
+      ;; 
+    h)
+      usage
+      exit 0
+      ;;
+    l)
+      echo "Pas encore implémenté..."
+      exit 1
+      ;;
+    o)
+      HDMI_CARD=$OPTARG
+      ;;   
+    v)
+      echo "VERSION: $VERSION"
+      exit 0
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      exit 1
+      ;;
+  esac
+done
+
 
 if [ $ARG -eq 0 ]; then
   pacmd set-card-profile 0 output:analog-stereo+input:analog-stereo  
-  xrandr --output HDMI1 --off --output LVDS1 --auto
+  xrandr --output $HDMI_CARD --off --output $PC_CARD --auto
 elif [ $ARG -eq 1 ]; then
+  echo $HDMI_CARD
+  if (xrandr | grep "$HDMI_CARD disconnected"); then
+    echo "Le câble HDMI n'est pas branché !" >&2
+    exit 1
+  fi
   pacmd set-card-profile 0 output:hdmi-stereo
-  xrandr --output HDMI1 --auto --output LVDS1 --off
+  xrandr --output $HDMI_CARD --auto --output $PC_CARD --off
+  read VALIDATION
+  if [[ "$VALIDATION" != '' ]]; then
+    $0 -a 0
+    exit 0
+  fi
 else
   pacmd set-card-profile 0 output:analog-stereo+input:analog-stereo
-  xrandr --output LVDS1 --auto --primary --output HDMI1 --auto --right-of LVDS1
+  xrandr --output $PC_CARD --auto --primary --output $HDMI_CARD --auto --right-of $PC_CARD
 fi
