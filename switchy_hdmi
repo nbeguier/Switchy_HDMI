@@ -6,13 +6,14 @@ function usage {
   echo "switchy_hdmi -a 0            # Désactive le HDMI."
   echo "switchy_hdmi -a 1            # Active seulement le HDMI."
   echo "switchy_hdmi -a 2            # Laisse le PC en master."
+  echo "switchy_hdmi -a 3            # Image identique"
   echo "switchy_hdmi -a 1 -o 'HDMI2' # Active seulement le HDMI, et force l'interface de sortie."
   echo "switchy_hdmi -l              # Affiche les informations des cartes."
 }
 
 HDMI_CARD='HDMI1'
 PC_CARD='LVDS1'
-VERSION='1.1.0'
+VERSION='1.2.0'
 
 while getopts "a:hlo:v" opt; do
   case $opt in
@@ -46,7 +47,6 @@ if [ $ARG -eq 0 ]; then
   pacmd set-card-profile 0 output:analog-stereo+input:analog-stereo  
   xrandr --output $HDMI_CARD --off --output $PC_CARD --auto
 elif [ $ARG -eq 1 ]; then
-  echo $HDMI_CARD
   if (xrandr | grep "$HDMI_CARD disconnected"); then
     echo "Le câble HDMI n'est pas branché !" >&2
     exit 1
@@ -58,7 +58,10 @@ elif [ $ARG -eq 1 ]; then
     $0 -a 0
     exit 0
   fi
-else
+elif [ $ARG -eq 2 ]; then
   pacmd set-card-profile 0 output:analog-stereo+input:analog-stereo
-  xrandr --output $PC_CARD --auto --primary --output $HDMI_CARD --auto --right-of $PC_CARD
+  xrandr --output $PC_CARD --auto --output $HDMI_CARD --auto --right-of $PC_CARD --primary
+else
+  pacmd set-card-profile 0 output:hdmi-stereo
+  xrandr --output $HDMI_CARD --auto --primary --output $PC_CARD --auto --same-as $HDMI_CARD
 fi
