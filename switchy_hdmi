@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Copyright 2015-2021 Nicolas Béguier
+# Licensed under the Apache License
+# Written by Nicolas BEGUIER (nicolas_beguier@hotmail.com)
+
 function usage {
   echo "Usage: switchy_hdmi [-hvl] [-a OPTION] [-o output_card]"
   echo ""
@@ -13,7 +17,7 @@ function usage {
 
 HDMI_CARD='HDMI1'
 PC_CARD='LVDS1'
-VERSION='1.2.0'
+VERSION='1.2.1'
 
 while getopts "a:hlo:v" opt; do
   case $opt in
@@ -42,26 +46,30 @@ while getopts "a:hlo:v" opt; do
   esac
 done
 
+if [ "${#}" == 0 ]; then
+    usage
+    exit 1
+fi
 
-if [ $ARG -eq 0 ]; then
+if [ "${ARG}" -eq 0 ]; then
   pacmd set-card-profile 0 output:analog-stereo+input:analog-stereo  
-  xrandr --output $HDMI_CARD --off --output $PC_CARD --auto
-elif [ $ARG -eq 1 ]; then
-  if (xrandr | grep "$HDMI_CARD disconnected"); then
+  xrandr --output "${HDMI_CARD}" --off --output "${PC_CARD}" --auto
+elif [ "${ARG}" -eq 1 ]; then
+  if (xrandr | grep "${HDMI_CARD} disconnected"); then
     echo "Le câble HDMI n'est pas branché !" >&2
     exit 1
   fi
   pacmd set-card-profile 0 output:hdmi-stereo
-  xrandr --output $HDMI_CARD --auto --output $PC_CARD --off
-  read VALIDATION
+  xrandr --output "${HDMI_CARD}" --auto --output "${PC_CARD}" --off
+  read -r VALIDATION
   if [[ "$VALIDATION" != '' ]]; then
     $0 -a 0
     exit 0
   fi
-elif [ $ARG -eq 2 ]; then
+elif [ "${ARG}" -eq 2 ]; then
   pacmd set-card-profile 0 output:analog-stereo+input:analog-stereo
-  xrandr --output $PC_CARD --auto --output $HDMI_CARD --auto --right-of $PC_CARD --primary
+  xrandr --output "${PC_CARD}" --auto --output "${HDMI_CARD}" --auto --right-of "${PC_CARD}" --primary
 else
   pacmd set-card-profile 0 output:hdmi-stereo
-  xrandr --output $HDMI_CARD --auto --primary --output $PC_CARD --auto --same-as $HDMI_CARD
+  xrandr --output "${HDMI_CARD}" --auto --primary --output "${PC_CARD}" --auto --same-as "${HDMI_CARD}"
 fi

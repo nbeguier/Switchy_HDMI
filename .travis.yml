@@ -1,0 +1,4 @@
+language: shell
+script:
+  - bash -c 'shellcheck -x switchy_hdmi'
+  - bash -c 'shellcheck -x info.sh'
